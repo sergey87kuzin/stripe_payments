@@ -22,7 +22,6 @@ def index(request):
 def get_item(request, id):
     item = get_object_or_404(Item, id=id)
     publishable_key = os.getenv('PUBLISHABLE_KEY')
-    print(CURR_PRICE)
     context = {
         'item': item,
         'key': publishable_key,

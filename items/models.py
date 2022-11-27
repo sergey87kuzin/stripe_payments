@@ -5,12 +5,11 @@ import stripe
 from django.db import models
 from django.core.validators import MaxValueValidator
 from dotenv import load_dotenv
+from .literals import CURR_PRICE, CURRENCIES
 
 load_dotenv()
 logger = logging.getLogger('django')
 stripe.api_key = os.getenv('API_KEY')
-
-CURRENCIES = (('usd', 'usd'), ('eur', 'eur'), ('chf', 'chf'))
 
 
 class Item(models.Model):
@@ -72,15 +71,12 @@ class Item(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        CURR_PRICE = {
-            'usd': self.price_in_usd * 100,
-            'eur': self.price_in_eur * 100,
-            'chf': self.price_in_chf * 100
-        }
-        unit_amount = int(CURR_PRICE[self.currency])
-        del CURR_PRICE[self.currency]
+        prices = CURR_PRICE.copy()
+        unit_amount = int(getattr(self, prices[self.currency])) * 100
+        del prices[self.currency]
         options = {
-            key: {'unit_amount': value} for key, value in CURR_PRICE.items()
+            key: {'unit_amount': getattr(self, prices[key]) * 100}
+            for key in prices.keys()
         }
         try:
             new_item = stripe.Product.create(

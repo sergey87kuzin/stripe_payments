@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from dotenv import load_dotenv
 
 from .models import Item, Order
+from .literals import CURR_PRICE
 
 load_dotenv()
 logger = logging.getLogger('django')
@@ -20,16 +21,12 @@ def index(request):
 
 def get_item(request, id):
     item = get_object_or_404(Item, id=id)
-    CURR_PRICE = {
-        'usd': item.price_in_usd,
-        'eur': item.price_in_eur,
-        'chf': item.price_in_chf
-    }
     publishable_key = os.getenv('PUBLISHABLE_KEY')
+    print(CURR_PRICE)
     context = {
         'item': item,
         'key': publishable_key,
-        'price': CURR_PRICE[item.currency]}
+        'price': getattr(item, CURR_PRICE[item.currency])}
     return render(request, 'item.html', context)
 
 
